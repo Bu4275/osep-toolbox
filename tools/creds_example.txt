@@ -1,0 +1,3 @@
+IP,Domain,Username,Password,NTLM,useProxy
+192.168.0.1,.,administrator,password,,true
+192.168.0.1,domain,john,,NTLM,true

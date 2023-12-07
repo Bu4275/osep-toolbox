@@ -1,0 +1,1 @@
+run post/windows/manage/priv_migrate NAME=notepad.exe ANAME=notepad.exe

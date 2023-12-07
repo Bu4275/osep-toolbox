@@ -1,0 +1,13 @@
+# run post/windows/manage/priv_migrate NAME=notepad.exe ANAME=notepad.exe
+getuid
+#getprivs
+
+# https://book.hacktricks.xyz/windows-hardening/authentication-credentials-uac-and-efs/uac-user-account-control#summary
+# if value is 1, LSASS Protection is enabled
+#reg queryval -k "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa" -v RunAsPPL
+
+# if value is 0, built-in account Administrator cannot do remote administration tasks 
+#reg queryval -k "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -v LocalAccountTokenFilterPolicy
+
+# If it's 1 then UAC is activated, if its 0 or it doesn't exist, then UAC is inactive.
+#reg queryval -k "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System" -v EnableLUA

@@ -1,0 +1,4 @@
+pycryptodome
+deflate
+termcolor
+pypsexec

