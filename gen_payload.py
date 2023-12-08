@@ -752,6 +752,12 @@ powershell_files = {
     "description": "",
     "command": ''
   },
+    "Invoke-SharpGPOAbuse.ps1": {
+    "path": os.path.join(thirdparty_folder, 'Invoke-SharpGPOAbuse.ps1'),
+    "outname": obfuscate_name('Invoke-SharpGPOAbuse.ps1'),
+    "description": "https://github.com/S3cur3Th1sSh1t/PowerSharpPack/blob/master/PowerSharpBinaries/Invoke-SharpGPOAbuse.ps1",
+    "command": ''
+  },
 }
 
 
