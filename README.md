@@ -33,7 +33,8 @@ sudo python3 -m pip install arsenal-cli
 
 Add alias (Kali)
 ```
-echo \"alias a='${DIR}/run'\" >> ~/.zshrc
+echo PATH=\$PATH:\$HOME/.local/bin >> ~/.zshrc
+echo alias a=\'arsenal\' >> ~/.zshrc
 ```
 
 Fix arsenal issues on Kali
