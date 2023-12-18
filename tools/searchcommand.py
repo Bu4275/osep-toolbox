@@ -99,6 +99,7 @@ parser.add_argument('-parent-krbtgt-nthash', action='store', metavar='Root domai
 parser.add_argument('-hostname', action='store', metavar='target', help='Hostname')
 parser.add_argument('-cmd', action='store', metavar='command', help='command')
 parser.add_argument('-target-computer', action='store', metavar='target-computer', help='Target-computer')
+parser.add_argument('-target-sid', action='store', metavar='target domain sid', help='Target domain sid')
 parser.add_argument('-target-user', action='store', metavar='target-user', help='Target-user')
 parser.add_argument('-ud-computer', action='store', metavar='Unconstrained Delegation', help='Unconstrained Delegation')
 parser.add_argument('-ud-nthash', action='store', metavar='Unconstrained Delegation Computer NTLM', help='Unconstrained Delegation Computer NTLM')
@@ -110,9 +111,13 @@ parser.add_argument('-attackerhost', action='store', metavar='Attacker Host', he
 parser.add_argument('-service', action='store', metavar='Service name', help='Service name')
 
 
-parser.add_argument('-parent-domain', action='store', metavar='Extermal dc domain', help='extermal domain.')
-parser.add_argument('-parent-dc-host', action='store', metavar='Extermal dc domain', help='Hostname of the extermal domain controller.')
-parser.add_argument('-parent-sid', action='store', metavar='Parent Domain SID', help='Parent Domain SID')
+parser.add_argument('-target-domain', action='store', metavar='Target domain', help='Target domain.')
+parser.add_argument('-target-dc-host', action='store', metavar='Target dc FQDN', help='Hostname of the target domain controller.')
+parser.add_argument('-target-domain-sid', action='store', metavar='Target domain SID', help='Target Domain SID')
+parser.add_argument('-current-domain', action='store', metavar='Current domain', help='Current domain.')
+parser.add_argument('-current-dc-host', action='store', metavar='Current dc FQDN', help='Hostname of the current domain controller.')
+parser.add_argument('-current-domain-sid', action='store', metavar='Current domain SID', help='Current Domain SID')
+parser.add_argument('-current-domain-krbtgt-nthash', action='store', metavar='Current domain krbtgt nthash', help='Current domain krbtgt nthash')
 
 parser.add_argument('-forest-domain', action='store', metavar='Target forest domain', help='Target forest domain')
 parser.add_argument('-forest-dc-host', action='store', metavar='DC Hostname of target forest', help='DC Hostname of target forest')
@@ -158,8 +163,6 @@ if varmap['extra_sid'] is not None:
 if varmap['domain'] is not None:
     varmap['domain_short'] = varmap['domain'].split('.')[0]
 
-if varmap['parent_domain'] is not None:
-    varmap['parent_domain_short'] = varmap['parent_domain'].split('.')[0]
 
 if varmap['listen_ip'] is None:
     varmap['listen_ip'] = get_ip_address_by_inet_name(varmap['listen_interface'].encode('utf-8'))
