@@ -132,46 +132,44 @@ def parse_user(jdata, all_obj=dict()):
 
         ObjectIdentifier = data['ObjectIdentifier']
         IsDeleted = str(data['IsDeleted'])
-        IsACLProtected = str(data['IsACLProtected'])
+        IsACLProtected = ''
+        if 'IsACLProtected' in IsACLProtected:
+            IsACLProtected = str(data['IsACLProtected'])
 
         Properties = data['Properties']
         
         domain = Properties['domain']
         name = Properties['name']
-        try:
+        if 'distinguishedname' in Properties:
             distinguishedname = Properties['distinguishedname']
-            highvalue = str(Properties['highvalue'])
             cn = distinguishedname.split('CN=')[1].split(',')[0] if distinguishedname != 'None' else 'None'
-            domain = str(Properties['domain'])
-            domainsid = str(Properties['domainsid'])
-            
-            description = str(Properties['description'])
-            whencreated = datetime_str(Properties['whencreated'])
-            sensitive = str(Properties['sensitive'])
-            dontreqpreauth = str(Properties['dontreqpreauth'])
-            passwordnotreqd = str(Properties['passwordnotreqd'])
-            unconstraineddelegation = str(Properties['unconstraineddelegation'])
-            pwdneverexpires = str(Properties['pwdneverexpires'])
-            enabled = str(Properties['enabled'])
-            trustedtoauth = str(Properties['trustedtoauth'])
-            lastlogon = str(Properties['lastlogon'])
-            lastlogontimestamp = str(Properties['lastlogontimestamp'])
-            pwdlastset = datetime_str(Properties['pwdlastset'])
-            serviceprincipalnames = ','.join(Properties['serviceprincipalnames'])
-            hasspn = str(Properties['hasspn'])
-            displayname = str(Properties['displayname'])
-            email = str(Properties['email'])
-            title = str(Properties['title'])
-            homedirectory = str(Properties['homedirectory'])
-            userpassword = str(Properties['userpassword'])
-            unixpassword = str(Properties['unixpassword'])
-            unicodepassword = str(Properties['unicodepassword'])
-            sfupassword = str(Properties['sfupassword'])
-            admincount = str(Properties['admincount'])
-            sidhistory = ','.join(Properties['sidhistory'])
-        except KeyError as e:
-            print(e)
-            # sys.exit(0)
+        highvalue = str(Properties.get('highvalue', ''))
+        domainsid = str(Properties.get('domainsid', ''))
+        description = str(Properties.get('description', ''))
+        whencreated = datetime_str(Properties.get('whencreated', 0))
+        sensitive = str(Properties.get('sensitive', ''))
+        dontreqpreauth = str(Properties.get('dontreqpreauth', ''))
+        passwordnotreqd = str(Properties.get('passwordnotreqd', ''))
+        unconstraineddelegation = str(Properties.get('unconstraineddelegation', ''))
+        pwdneverexpires = str(Properties.get('pwdneverexpires', ''))
+        enabled = str(Properties.get('enabled', ''))
+        trustedtoauth = str(Properties.get('trustedtoauth', ''))
+        lastlogon = str(Properties.get('lastlogon', ''))
+        lastlogontimestamp = str(Properties.get('lastlogontimestamp', ''))
+        pwdlastset = datetime_str(Properties.get('pwdlastset', 0))
+        serviceprincipalnames = ','.join(Properties.get('serviceprincipalnames', []))
+        hasspn = str(Properties.get('hasspn', ''))
+        displayname = str(Properties.get('displayname', ''))
+        email = str(Properties.get('email', ''))
+        title = str(Properties.get('title', ''))
+        homedirectory = str(Properties.get('homedirectory', ''))
+        userpassword = str(Properties.get('userpassword', ''))
+        unixpassword = str(Properties.get('unixpassword', ''))
+        unicodepassword = str(Properties.get('unicodepassword', ''))
+        sfupassword = str(Properties.get('sfupassword', ''))
+        admincount = str(Properties.get('admincount', ''))
+        sidhistory = ','.join(Properties.get('sidhistory', []))
+
 
         ret.append([name, cn, domain, description, ObjectIdentifier, Aces, whencreated, pwdlastset])
 
@@ -193,19 +191,22 @@ def parse_groups(jdata, all_obj=dict()):
 
 
         ObjectIdentifier = data['ObjectIdentifier']
+
         IsDeleted = str(data['IsDeleted'])
-        IsACLProtected = str(data['IsACLProtected'])
+
+        IsACLProtected = ''
+        if 'IsACLProtected' in data:
+            IsACLProtected = str(data['IsACLProtected'])
 
         Properties = data['Properties']
         domain = Properties['domain']
         name = Properties['name']
-        domainsid = Properties['domainsid'] if 'domainsid' in Properties else None
-        
-        distinguishedname = Properties['distinguishedname'] if 'distinguishedname' in Properties else 'None'
-        highvalue = str(Properties['highvalue']) if 'highvalue' in Properties else 'None'
-        description = str(Properties['description']) if 'description' in Properties else 'None'
-        whencreated = datetime_str((Properties['whencreated'])) if 'whencreated' in Properties else 'None'
-        admincount = str(Properties['admincount']) if 'admincount' in Properties else 'None'
+        domainsid = Properties.get('domainsid', '')
+        distinguishedname = Properties.get('distinguishedname', 'None')
+        highvalue = str(Properties.get('highvalue', 'None'))
+        description = str(Properties.get('description', 'None'))
+        whencreated = datetime_str(Properties.get('whencreated', 0))
+        admincount = str(Properties.get('admincount', 'None'))
 
         CN = distinguishedname.split('CN=')[1].split(',')[0] if distinguishedname != 'None' else 'None'
         SID = ObjectIdentifier.split('-')[-1]
@@ -226,31 +227,39 @@ def parse_groups(jdata, all_obj=dict()):
     return ret
 
 def parser_computers(jdata, all_obj=dict()):
-    ret = [['Name', 'Domain', 'SAM', 'ACES (hidden default admin groups)', 'Local Admins', 'unconstraineddelegation']]
+    ret = [['Name', 'Domain', 'SAM', 'Description', 'ACES (hidden default admin groups)', 'Local Admins', 'unconstraineddelegation']]
     computers = dict()
     
     for data in jdata['data']:
         data['ObjectType'] = 'Computer'
-        PrimaryGroupSID = data['PrimaryGroupSID'] if 'PrimaryGroupSID' in data  else None
-        AllowedToDelegate = ','.join(data['AllowedToDelegate']) if 'AllowedToDelegate' in data  else None
-        AllowedToAct = ','.join(data['AllowedToAct']) if 'AllowedToAct' in data  else None
-        HasSIDHistory = ','.join(data['HasSIDHistory']) if 'HasSIDHistory' in data  else None
-        DumpSMSAPassword = ','.join(data['DumpSMSAPassword']) if 'DumpSMSAPassword' in data  else None
-        Sessions = str(data['Sessions']) if 'Sessions' in data  else None
-        PrivilegedSessions = str(data['PrivilegedSessions']) if 'PrivilegedSessions' in data  else None
-        RegistrySessions = str(data['RegistrySessions']) if 'RegistrySessions' in data  else None
+        PrimaryGroupSID = data.get('PrimaryGroupSID', '')
+        AllowedToDelegate = ','.join(data.get('AllowedToDelegate', ''))
+        AllowedToAct = ','.join(data.get('AllowedToAct', ''))
+        HasSIDHistory = ','.join(data.get('HasSIDHistory', ''))
+        DumpSMSAPassword = ','.join(data.get('DumpSMSAPassword', ''))
+        Sessions = str(data.get('Sessions', ''))
+        PrivilegedSessions = str(data.get('PrivilegedSessions', ''))
+        RegistrySessions = str(data.get('RegistrySessions', ''))
 
         # LocalAdmins
         localadmin = ''
-        for admin in data['LocalAdmins']['Results']:
-            if admin['ObjectIdentifier'] in all_obj:
-                localadmin += admin['ObjectType'] + ': ' + all_obj[admin['ObjectIdentifier']]['Properties']['name'] + '\n'
-            else:
-                localadmin += admin['ObjectType'] + ': ' + admin['ObjectIdentifier'] + '\n'
+        if 'LocalAdmins' in data:
+            for admin in data['LocalAdmins']['Results']:
+                if admin['ObjectIdentifier'] in all_obj:
+                    localadmin += admin['ObjectType'] + ': ' + all_obj[admin['ObjectIdentifier']]['Properties']['name'] + '\n'
+                else:
+                    localadmin += admin['ObjectType'] + ': ' + admin['ObjectIdentifier'] + '\n'
+        RemoteDesktopUsers = ''
+        if 'RemoteDesktopUsers' in data: 
+            RemoteDesktopUsers = str(data['RemoteDesktopUsers'])
+        
+        DcomUsers = ''
+        if 'DcomUsers' in data:
+            DcomUsers = str(data['DcomUsers'])
 
-        RemoteDesktopUsers = str(data['RemoteDesktopUsers'])
-        DcomUsers = str(data['DcomUsers'])
-        PSRemoteUsers = str(data['PSRemoteUsers'])
+        PSRemoteUsers = ''
+        if 'PSRemoteUsers' in data:
+            PSRemoteUsers = str(data['PSRemoteUsers'])
         Status = str(data['Status'])
 
         # Aces
@@ -279,20 +288,22 @@ def parser_computers(jdata, all_obj=dict()):
         domainsid = Properties['domainsid']
         highvalue = str(Properties['highvalue']) if 'highvalue' in Properties else None
         samaccountname = Properties['samaccountname']
-        haslaps = str(Properties['haslaps'])
-        description = str(Properties['description'])
-        whencreated = str(Properties['whencreated'])
-        enabled = str(Properties['enabled'])
-        unconstraineddelegation = str(Properties['unconstraineddelegation'])
-        trustedtoauth = str(Properties['trustedtoauth'])
-        lastlogon = str(Properties['lastlogon'])
-        lastlogontimestamp = str(Properties['lastlogontimestamp'])
-        pwdlastset = str(Properties['pwdlastset'])
-        serviceprincipalnames = ','.join(Properties['serviceprincipalnames'])
-        operatingsystem = str(Properties['operatingsystem'])
-        sidhistory = [str(x) for x in Properties['sidhistory']]
+        haslaps = ''
+
+        haslaps = str(Properties.get('haslaps', ''))
+        description = str(Properties.get('description', ''))
+        whencreated = datetime_str(Properties.get('whencreated', 0))
+        enabled = str(Properties.get('enabled', ''))
+        unconstraineddelegation = str(Properties.get('unconstraineddelegation', ''))
+        trustedtoauth = str(Properties.get('trustedtoauth', ''))
+        lastlogon = str(Properties.get('lastlogon', ''))
+        lastlogontimestamp = str(Properties.get('lastlogontimestamp', ''))
+        pwdlastset = datetime_str(Properties.get('pwdlastset', 0))
+        serviceprincipalnames = ','.join(Properties.get('serviceprincipalnames', []))
+        operatingsystem = str(Properties.get('operatingsystem', ''))
+        sidhistory = ','.join(Properties.get('sidhistory', []))
         
-        ret.append([name, domain, samaccountname, Aces, localadmin, unconstraineddelegation])
+        ret.append([name, domain, samaccountname, description, Aces, localadmin, unconstraineddelegation])
 
 
 
@@ -301,18 +312,26 @@ def parser_computers(jdata, all_obj=dict()):
 def parser_gpos(jdata, all_obj=dict()):
     ret = [['Name', 'Domain', 'Aces', 'highvalue', 'whencreated', 'gpcpath']]
     computers = dict()
-    
+    Properties = ''
+    domain = ''
+    name = ''
+    distinguishedname = ''
+    domainsid = ''
+    highvalue = ''
+    description = ''
+    whencreated = ''
+    gpcpath = ''
     for data in jdata['data']:
         # Properties
         Properties = data['Properties']
-        domain = Properties['domain']
-        name = Properties['name']
-        distinguishedname = Properties['distinguishedname']
-        domainsid = Properties['domainsid']
-        highvalue = str(Properties['highvalue'])
-        description = str(Properties['description'])
-        whencreated = datetime_str(Properties['whencreated'])
-        gpcpath = str(Properties['gpcpath'])
+        domain = Properties.get('domain', '')
+        name = Properties.get('name', '')
+        distinguishedname = Properties.get('distinguishedname', '')
+        domainsid = Properties.get('domainsid', '')
+        highvalue = str(Properties.get('highvalue', ''))
+        description = str(Properties.get('description', ''))
+        whencreated = datetime_str(Properties.get('whencreated', ''))
+        gpcpath = str(Properties.get('gpcpath', ''))
     
         # Aces
         for ace in data['Aces']:
@@ -330,24 +349,23 @@ def parser_gpos(jdata, all_obj=dict()):
 def parser_domains(jdata, all_obj=dict()):
     ret = [['Name', 'Domain', 'DomainSID', 'Aces', 'Trusts', 'highvalue']]
     computers = dict()
-    
-    for data in jdata['data']:
-        GPOChanges = data['GPOChanges']
-        LocalAdmins = '\n'.join(GPOChanges['LocalAdmins'])
-        RemoteDesktopUsers = '\n'.join(GPOChanges['RemoteDesktopUsers'])
-        DcomUsers = '\n'.join(GPOChanges['DcomUsers'])
-        PSRemoteUsers = '\n'.join(GPOChanges['PSRemoteUsers'])
-        AffectedComputers = str(GPOChanges['AffectedComputers'])
 
-        Properties = data['Properties']
-        domain = Properties['domain']
-        name = Properties['name']
-        distinguishedname = Properties['distinguishedname']
-        domainsid = Properties['domainsid']
-        highvalue = str(Properties['highvalue'])
-        description = str(Properties['description'])
-        whencreated = datetime_str(Properties['whencreated'])
-        functionallevel = str(Properties['functionallevel'])
+    for data in jdata['data']:
+        GPOChanges = data.get('GPOChanges', {})
+        LocalAdmins = '\n'.join(GPOChanges.get('LocalAdmins', []))
+        RemoteDesktopUsers = '\n'.join(GPOChanges.get('RemoteDesktopUsers', []))
+        DcomUsers = '\n'.join(GPOChanges.get('DcomUsers', []))
+        PSRemoteUsers = '\n'.join(GPOChanges.get('PSRemoteUsers', []))
+        AffectedComputers = str(GPOChanges.get('AffectedComputers', ''))
+        Properties = data.get('Properties', {})
+        domain = Properties.get('domain', '')
+        name = Properties.get('name', '')
+        distinguishedname = Properties.get('distinguishedname', '')
+        domainsid = Properties.get('domainsid', '')
+        highvalue = str(Properties.get('highvalue', ''))
+        description = str(Properties.get('description', ''))
+        whencreated = datetime_str(Properties.get('whencreated', ''))
+        functionallevel = str(Properties.get('functionallevel', ''))
 
         ChildObjects = ''
         for childobject in data['ChildObjects']:
@@ -370,9 +388,9 @@ def parser_domains(jdata, all_obj=dict()):
                 ace['PrincipalSID'] = all_obj[SID]['Properties']['name']
         Aces = '\n'.join([str(x) for x in data['Aces']])
 
-        ObjectIdentifier = data['ObjectIdentifier']
-        IsDeleted = str(data['IsDeleted'])
-        IsACLProtected = str(data['IsACLProtected'])
+        ObjectIdentifier = data.get('ObjectIdentifier', '')
+        IsDeleted = str(data.get('IsDeleted', ''))
+        IsACLProtected = str(data.get('IsACLProtected', ''))
         ret.append([name, domain, ObjectIdentifier, Aces, Trusts, highvalue])
     return ret
 
@@ -421,16 +439,16 @@ def parse_user_and_group(users_and_groups):
         Properties = data['Properties'] if 'Properties' in data else None
 
         name = ''
+        cn = ''
         domain = ''
         description = ''
         whencreated = ''
         pwdlastset = ''
-        cn = ''
         if Properties is not None:
             domain = str(Properties['domain'])
-            description = str(Properties['description']) if 'description' in Properties else ''
-            whencreated = datetime_str(Properties['whencreated']) if 'whencreated' in Properties else ''
-            pwdlastset = datetime_str(Properties['pwdlastset']) if 'pwdlastset' in Properties else ''
+            description = str(Properties.get('description', '')) 
+            whencreated = datetime_str(Properties.get('whencreated', 0)) 
+            pwdlastset = datetime_str(Properties.get('pwdlastset', 0))
             
             if 'distinguishedname' in Properties:
                 distinguishedname = Properties['distinguishedname']
@@ -439,7 +457,7 @@ def parse_user_and_group(users_and_groups):
                     cn = 'Group: ' + cn
                 elif data['ObjectType'] == 'Computer':
                     cn = 'Computer: ' + cn
-            name = Properties['name']
+            name = Properties.get('name', '')
 
         ret.append([name, cn, domain, description, SID, whencreated, pwdlastset])
     return ret
@@ -465,7 +483,7 @@ for t in all_type:
 folder = sys.argv[1]
 for filename in os.listdir(folder):
     for t in all_type:
-        if t in filename:
+        if t in filename and filename.endswith('.json'):
             filename_users = os.path.join(folder, filename)
             data = open(filename_users, 'rb').read().decode('utf-8-sig')
             _data = json.loads(data)
